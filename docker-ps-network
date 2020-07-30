@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+(
+    echo "Name Config.MacAddress Networks.IPAddress Networks.MacAddress Networks.Gateway"
+    docker ps -aq | \
+    xargs -I {} docker inspect {} | \
+    jq -r '.[] | "\(.Name[0:50])\t\(.Config.MacAddress)\t\(.NetworkSettings.Networks|[.[]]|.[0].IPAddress)\t\(.NetworkSettings.Networks|[.[]]|.[0].MacAddress)\t\(.NetworkSettings.Networks|[.[]]|.[0].Gateway)"'
+) | \
+    sed -e 's/^\///' | \
+    column -t

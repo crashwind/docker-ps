@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+container=${1:?gimme container id or name}
+
+docker inspect $container | jq -r '.[].NetworkSettings'
