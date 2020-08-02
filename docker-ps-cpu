@@ -4,7 +4,7 @@
 function help {
     msg="$0 OPTIONS\n"
     msg="${msg}\t-w WIDTH\tset container name width\n"
-    msg="${msg}\t-r\tshow CPU real-time period/runtime\n"
+    msg="${msg}\t-r\t\tshow CPU real-time period/runtime\n"
     echo -ne "$msg"
 }
 
