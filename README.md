@@ -122,3 +122,36 @@ $ docker-show-network-config grafana
 }
 ```
 
+# ansible
+## example
+```
+  - name: docker-ps block
+    block:
+
+    - name: set docker-ps dest dir
+      set_fact:
+        docker_ps_dest: "/usr/local/bin/"
+
+    - name: get github.com/crashwind/docker-ps.git filelist
+      uri:
+        url: https://api.github.com/repos/crashwind/docker-ps/contents
+        headers:
+          Accept: "application/vnd.github.v3+json"
+      retries: 3
+      delay: 5
+      register: file_list
+
+    - name: get github.com/crashwind/docker-ps files to /usr/local/bin/
+      get_url:
+        url: "{{ item.download_url }}"
+        dest: "{{ docker_ps_dest }}{{ item.name }}"
+        mode: '0755'
+      retries: 3
+      delay: 5
+      loop: "{{ file_list.json }}"
+      loop_control:
+        label: "{{ docker_ps_dest }}{{ item.name }}"
+      when: "'docker-' in item.name"
+
+    tags: [ docker, docker-ps ]
+```
