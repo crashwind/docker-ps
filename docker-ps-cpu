@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+
+function help {
+    msg="$0 OPTIONS\n"
+    msg="${msg}\t-w WIDTH\tset container name width\n"
+    msg="${msg}\t-r\tshow CPU real-time period/runtime\n"
+    echo -ne "$msg"
+}
+
+
+function main {
+    # main code
+    # opts described in help()
+
+    local show_cpu_rt=false
+    local ct_name_width=40
+    local header="Name"
+    local columns="CpusetCpus CpuCount CpuQuota CpuShares CpuPercent"
+    local columns_rt="CpuRealtimePeriod CpuRealtimeRuntime"
+    local jq_filter=""
+
+    while getopts "hrw:" opt; do
+        case $opt in
+            r)
+                # show CPU real-time period/runtime
+                show_cpu_rt=true
+                ;;
+            w)
+                # set container name width
+                ct_name_width=$((OPTARG+1))
+                ;;
+            *|h)
+                help
+                exit
+                ;;
+        esac
+    done
+
+    # add CPU real-time columns
+    if $show_cpu_rt; then
+        columns="$columns $columns_rt"
+    fi
+
+    # make header and jq filter
+    for col in $columns; do
+        header="$header $col"
+        jq_filter="${jq_filter}\t\(.HostConfig.${col})"
+    done
+
+    # complete jq_filter
+    local jq_filter_name=".[] | \"\(.Name[0:${ct_name_width}])"
+    jq_filter="${jq_filter_name}${jq_filter}"
+    jq_filter="${jq_filter}\""
+
+    show_table "$header" "$jq_filter"
+}
+
+
+function show_table {
+    # $1: header
+    # $2: jq filter
+
+    local header=${1:?header is required}
+    local jq_filter=${2:?jq filter is required}
+    (
+        echo "$header"
+        docker ps -aq | \
+        xargs -I {} docker inspect {} | \
+        jq -r "$jq_filter"
+    ) | \
+        sed -e 's/^\///' | \
+        column -t
+}
+
+main $@
