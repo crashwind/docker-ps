@@ -46,6 +46,13 @@ CONTAINER ID        NAMES               STATUS                 SIZE
 aabbccddeeff        zabbix-server       Up 18 hours            22kB (virtual 98.3MB)
 ```
 
+## docker-ps-cpu
+```
+$ docker-ps-cpu
+Name           CpusetCpus  CpuCount  CpuQuota  CpuShares  CpuPercent
+zabbix-server  26-27       0         0         0          0
+```
+
 ## docker-show-config
 show container `Config`
 ```
