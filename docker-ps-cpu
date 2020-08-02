@@ -45,13 +45,12 @@ function main {
     # make header and jq filter
     for col in $columns; do
         header="$header $col"
-        jq_filter="${jq_filter}\t\(.HostConfig.${col})"
+        jq_vals="${jq_vals}, if (((.HostConfig.${col} | tostring) | length) == 0) then \"-\" else .HostConfig.${col} end"
     done
 
     # complete jq_filter
-    local jq_filter_name=".[] | \"\(.Name[0:${ct_name_width}])"
-    jq_filter="${jq_filter_name}${jq_filter}"
-    jq_filter="${jq_filter}\""
+    local jq_ct_name=".Name[0:${ct_name_width}]"
+    jq_filter=".[] | [${jq_ct_name}${jq_vals}] | @tsv"
 
     show_table "$header" "$jq_filter"
 }
@@ -63,11 +62,12 @@ function show_table {
 
     local header=${1:?header is required}
     local jq_filter=${2:?jq filter is required}
+
     (
         echo "$header"
         docker ps -aq | \
         xargs -I {} docker inspect {} | \
-        jq -r "$jq_filter"
+        jq -er "$jq_filter"
     ) | \
         sed -e 's/^\///' | \
         column -t
