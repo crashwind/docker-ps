@@ -1,3 +1,63 @@
 #!/usr/bin/env bash
 
-docker ps -a --format 'table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Size}}'
+
+function help {
+    msg="$0 OPTIONS\n"
+    msg="${msg}\t-r\t\tshow size in raw format\n"
+    msg="${msg}\t-n\t\tdo not show header in raw format\n"
+    echo -ne "$msg"
+}
+
+
+function main {
+    # main code
+    # opts described in help()
+
+    local raw_format=false
+    local raw_show_header=true
+
+    while getopts "hrn" opt; do
+        case $opt in
+            r)
+                # raw format
+                raw_format=true
+                ;;
+            n)
+                # don`t show header in raw format output
+                raw_show_header=false
+                ;;
+            *|h)
+                help
+                exit
+                ;;
+        esac
+    done
+
+    show_table $raw_format $raw_show_header
+}
+
+
+function show_table {
+    # $1: show size in raw format
+
+    local raw_format=${1:-false}
+    local raw_show_header=${2:-true}
+
+    if $raw_format; then
+        (
+            if $raw_show_header; then
+                echo "Name Status SizeRw SizeRootFs"
+            fi
+            docker inspect \
+            -s \
+            --format '{{.Name}} {{.State.Status}} {{.SizeRw}} {{.SizeRootFs}}' \
+            $(docker ps -aq)
+        ) \
+            | sed -e 's/^\///' | column -t
+    else
+        docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Size}}'
+    fi
+}
+
+
+main $@
